@@ -1,25 +1,30 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'https://appointments-server-1-8e83aec0397d.herokuapp.com/api';
+const API_BASE_URL = "https://appointments-server-1-8e83aec0397d.herokuapp.com";
 
-export const getAppointments = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/appointments`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching appointments:', error);
-    throw error;    
+// Create an Axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Add interceptor to attach token to headers
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
+
+// API functions
+export const getAppointments = async () => {
+  const response = await api.get("/appointments");
+  return response.data;
 };
 
 export const createAppointment = async (appointmentData) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/appointments`, appointmentData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating appointment:', error);
-    throw error;
-  }
+  const response = await api.post("/appointments", appointmentData);
+  return response.data;
 };
 
-// Add other API functions as needed
+// Add other API methods as needed

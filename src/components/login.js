@@ -1,55 +1,102 @@
-// src/components/Login.js
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const Login = ({ setAuthenticated }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const navigate = useNavigate();
+const LoginScreen = () => {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+  });
 
-    const handleLogin = () => {
-        if (username === 'user' && password === 'password') {
-            setAuthenticated(true);
-            navigate('/calendar');
-        } else {
-            alert('Invalid credentials! Use username: user and password: password');
-        }
-    };
+  const [message, setMessage] = useState('');
+  const [token, setToken] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    return (
-        <Paper elevation={3} style={{ padding: '20px', maxWidth: '400px', margin: '50px auto' }}>
-            <Typography variant="h4" align="center" gutterBottom>
-                Login
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
-                <TextField
-                    label="Username"
-                    variant="outlined"
-                    fullWidth
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <TextField
-                    label="Password"
-                    type="password"
-                    variant="outlined"
-                    fullWidth
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    onClick={handleLogin}
-                >
-                    Login
-                </Button>
-            </Box>
-        </Paper>
-    );
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setToken('');
+
+    try {
+      const response = await axios.post(
+        'https://appointments-server-1-8e83aec0397d.herokuapp.com/api/users/login',
+        formData
+      );
+
+      const { token, user } = response.data;
+      setMessage(`Welcome, ${user.username}!`);
+      setToken(token);
+      console.log('JWT Token:', token);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Login failed.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            style={{ width: '100%', padding: '8px', margin: '5px 0', borderRadius: '4px' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            style={{ width: '100%', padding: '8px', margin: '5px 0', borderRadius: '4px' }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#007BFF',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
+
+      {message && <p style={{ marginTop: '20px', color: message.includes('Welcome') ? 'green' : 'red' }}>{message}</p>}
+
+      {token && (
+        <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #ddd', borderRadius: '4px' }}>
+          <strong>JWT Token:</strong>
+          <p style={{ wordWrap: 'break-word' }}>{token}</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default Login;
-
+export default LoginScreen;
